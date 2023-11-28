@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\JuegoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('index');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/juegos/historial', [JuegoController::class, 'historial'])->name('juegos.historial');
+    Route::get('/juegos/porcentaje', [JuegoController::class, 'porcentajeGanadas'])->name('juegos.porcentaje');
+    Route::get('/juegos/create', [JuegoController::class, 'create'])->name('juegos.create');
+    Route::post('/juegos/store', [JuegoController::class, 'store'])->name('juegos.store');
 });
 
 Route::get('/dashboard', function () {
