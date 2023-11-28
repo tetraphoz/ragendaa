@@ -44,9 +44,11 @@
 
   <div class="dashboard">
     <div class="message">
-      <p>You are logged in!</p>
+      <p>Bienvenido de vuelta!</p>
     </div>
-    <a href="#" class="cta-button">Explore</a>
+    <a href="/waiting" class="cta-button">Empezar a jugar</a>
+
+    @include('juegos.historial')
   </div>
 
 </body>
