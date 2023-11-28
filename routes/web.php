@@ -34,6 +34,10 @@ Route::get('/waiting', function () {
     return view('waiting');
 })->middleware(['auth', 'verified'])->name('waiting');
 
+Route::get('/partida', function () {
+    return view('partida');
+})->middleware(['auth', 'verified'])->name('partida');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
