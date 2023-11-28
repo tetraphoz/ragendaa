@@ -1,7 +1,12 @@
+<?php
+
+namespace App\Http\Controllers;
+
 use App\Models\Juego;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 
 class JuegoController extends Controller
 {
