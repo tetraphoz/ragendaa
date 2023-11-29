@@ -20,9 +20,8 @@ Route::get('/', function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/juegos/historial', [JuegoController::class, 'historial'])->name('components.juegos.historial');
+    Route::get('/juegos/historial', [JuegoController::class, 'historial'])->name('juegos.historial');
     Route::get('/juegos/porcentaje', [JuegoController::class, 'porcentajeGanadas'])->name('juegos.porcentaje');
-    Route::get('/juegos/create', [JuegoController::class, 'create'])->name('juegos.create');
     Route::post('/juegos/store', [JuegoController::class, 'store'])->name('juegos.store');
 });
 
