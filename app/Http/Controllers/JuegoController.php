@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Juego;
-use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+use App\Http\Controllers\Controller;
 
 
 class JuegoController extends Controller
 {
-    public function historial()
+    public function historial(): View
     {
         $user = Auth::user();
         $historial = Juego::where('jugador1_id', $user->id)
@@ -18,10 +20,11 @@ class JuegoController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('juegos.historial', compact('user', 'historial'));
+
+        return view('juegos.historial', compact('historial'));
     }
 
-    public function porcentajeGanadas()
+    public function porcentajeGanadas(): View
     {
         $user = Auth::user();
         $totalPartidas = Juego::where('jugador1_id', $user->id)
@@ -40,16 +43,9 @@ class JuegoController extends Controller
         return view('juegos.porcentaje', compact('user', 'porcentajeGanadas'));
     }
 
-    public function create()
-    {
-        $jugadores = User::all();
-        return view('juegos.create', compact('jugadores'));
-    }
-
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'jugador1_id' => 'required|exists:users,id',
             'jugador2_id' => 'required|exists:users,id',
             'resultado_jugador1' => 'required|integer',
             'resultado_jugador2' => 'required|integer',
@@ -62,7 +58,6 @@ class JuegoController extends Controller
             'resultado_jugador2' => $request->resultado_jugador2,
         ]);
 
-        return redirect()->route('juegos.historial')
-            ->with('success', 'Partida creada exitosamente.');
+        return redirect('/dashboard');
     }
 }
