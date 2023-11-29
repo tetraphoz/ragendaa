@@ -4,7 +4,6 @@
       <p>Bienvenido de vuelta!</p>
     </div>
 
-    <button href="/waiting">
         <a href="/waiting" class="cta-button">
             <button> Empezar a jugar </button>
         </a>
