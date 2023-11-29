@@ -19,25 +19,19 @@ Route::get('/', function () {
     return view('index');
 });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/juegos/historial', [JuegoController::class, 'historial'])->name('juegos.historial');
-    Route::get('/juegos/porcentaje', [JuegoController::class, 'porcentajeGanadas'])->name('juegos.porcentaje');
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/juegos/store', [JuegoController::class, 'store'])->name('juegos.store');
-});
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
+    Route::get('/waiting', function () {
+        return view('waiting');
+    })->name('waiting');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    Route::get('/partida', function () {
+        return view('partida');
+    })->name('partida');
 
-Route::get('/waiting', function () {
-    return view('waiting');
-})->middleware(['auth', 'verified'])->name('waiting');
-
-Route::get('/partida', function () {
-    return view('partida');
-})->middleware(['auth', 'verified'])->name('partida');
-
-Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
