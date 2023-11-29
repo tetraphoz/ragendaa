@@ -263,7 +263,7 @@ class PongGame {
                     'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify({
-                    jugador2_id: "1",
+                    jugador2_id: 2,
                     resultado_jugador1: this.blueScore,
                     resultado_jugador2: this.redScore,
                 }),
@@ -274,11 +274,11 @@ class PongGame {
             }
 
             const data = await response.json();
-            window.location.href = 'http://localhost/dashboard';
         } catch (error) {
             console.error('Error:', error);
             // Handle error as needed
         }
+            window.location.href = 'http://localhost/dashboard';
     }
     public init(): void {
         const animate = () => {
