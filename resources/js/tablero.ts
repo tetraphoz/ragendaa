@@ -8,36 +8,37 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
 import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
 
+const csrfToken = document.head.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
 class PongGame {
     private renderer: THREE.WebGLRenderer;
     private camera: THREE.PerspectiveCamera;
     private scene: THREE.Scene;
     private puck: THREE.Mesh;
-    private leftPaddle: THREE.Mesh;
-    private rightPaddle: THREE.Mesh;
-    private leftScore: number;
-    private rightScore: number;
+    private bluePaddle: THREE.Mesh;
+    private redPaddle: THREE.Mesh;
+    private blueScore: number;
+    private redScore: number;
     private ballSpeed: number;
     private ballDirectionX: number;
     private ballDirectionZ: number;
     private composer: THREE.EffectComposer;
+    private loader: THREE.FontLoader;
 
-    constructor(jugadorInicial: number) {
+    private blueScoreElement: HTMLElement;
+    private redScoreElement: HTMLElement;
+
+
+    constructor() {
         this.setupTablero();
-        this.setupJugadores();
+        this.movePaddle();
 
-        this.ballDirectionZ = jugadorInicial;
-        this.ballDirectionX = 0;
-        this.ballSpeed = 0.1;
-        this.leftScore = 0;
-        this.rightScore = 0;
+        this.resetPuck();
+
+        this.blueScore = 0;
+        this.redScore = 0;
 
         this.init();
-
-    }
-
-    private setupJugadores(){
-        this.movePaddle();
     }
 
     private setupTablero(){
@@ -53,6 +54,18 @@ class PongGame {
         this.createCubo();
         this.createRaquetas();
         this.createLight();
+
+        // Create and append HTML elements for displaying scores
+        this.blueScoreElement = document.createElement('div');
+        this.blueScoreElement.className = 'score';
+        this.blueScoreElement.textContent = 'Blue: 0';
+        document.getElementById("juego").appendChild(this.blueScoreElement);
+
+        this.redScoreElement = document.createElement('div');
+        this.redScoreElement.className = 'score';
+        this.redScoreElement.textContent = 'Red: 0';
+        document.getElementById("juego").appendChild(this.redScoreElement);
+
 
         this.composer = new EffectComposer( this.renderer );
 
@@ -83,17 +96,17 @@ class PongGame {
     }
 
     private createRaquetas() {
-        const leftPaddleMaterial = new THREE.MeshPhongMaterial({ color: 'blue' });
-        const rightPaddleMaterial = new THREE.MeshPhongMaterial({ color: 'red' });
+        const bluePaddleMaterial = new THREE.MeshPhongMaterial({ color: 'blue' });
+        const redPaddleMaterial = new THREE.MeshPhongMaterial({ color: 'red' });
 
         const racketGeometry = new THREE.BoxGeometry(8, 1, 1);
-        this.leftPaddle = new THREE.Mesh(racketGeometry, leftPaddleMaterial);
-        this.rightPaddle = new THREE.Mesh(racketGeometry, rightPaddleMaterial);
+        this.bluePaddle = new THREE.Mesh(racketGeometry, bluePaddleMaterial);
+        this.redPaddle = new THREE.Mesh(racketGeometry, redPaddleMaterial);
 
-        this.leftPaddle.position.set(0, 0, 20);
-        this.rightPaddle.position.set(0, 0, -20);
+        this.bluePaddle.position.set(0, 0, 20);
+        this.redPaddle.position.set(0, 0, -20);
 
-        this.scene.add(this.rightPaddle, this.leftPaddle);
+        this.scene.add(this.redPaddle, this.bluePaddle);
     }
 
     private createLight() {
@@ -150,82 +163,123 @@ class PongGame {
             raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), intersection);
 
             // Update the paddle position based on the intersection point
-            this.leftPaddle.position.x = intersection.x;
+            this.bluePaddle.position.x = intersection.x;
 
             // Ensure the paddle stays within certain bounds if needed
             // For example:
-            this.leftPaddle.position.x = Math.max(Math.min(this.leftPaddle.position.x, 15), -15);
+            this.bluePaddle.position.x = Math.max(Math.min(this.bluePaddle.position.x, 15), -15);
             });
     }
 
     private gameLoop(): void {
-        console.log(this.puck.position);
         this.puck.position.z += this.ballDirectionZ;
         this.puck.position.x += this.ballDirectionX;
+        this.redPaddleCPU();
         this.handleCollisions();
     }
 
+    private redPaddleCPU(){
+        this.redPaddle.position.x = this.puck.position.x;
+    }
+
+
     private handleCollisions(): void {
-        console.log(Math.abs(this.puck.position.x - this.leftPaddle.position.x));
+        if (this.puck.position.x >= 14.5 && this.puck.position.x <= 15
+           || this.puck.position.x <= -14.5 && this.puck.position.x >= -15){
+            this.ballDirectionX *= -1;
+            this.ballSpeed -= 0.001; // Agregar friccion en la pared
+        }
         if (this.puck.position.z >= 19.5 && this.puck.position.z <= 30){
-            if( Math.abs(this.puck.position.x - this.leftPaddle.position.x) < 4) {
+            if( Math.abs(this.puck.position.x - this.bluePaddle.position.x) < 4) {
                 this.ballDirectionZ *= -1;
-                this.ballSpeed += 0.01; // Increase ball speed on successful hit
-                // this.ballDirectionX = this.leftPaddle.userData.speedX; // Use paddle speed for x-direction
+                this.ballSpeed += 0.001; // Increase ball speed on successful hit
             } else {
-                console.log(this.rightScore);
-                this.rightScore++;
+                this.redScore++;
                 this.scoreVisualEffect();
                 this.resetPuck();
             }
         }
 
         if (this.puck.position.z <= -19.5 && this.puck.position.z >= -30){
-            if( Math.abs(this.puck.position.x - this.rightPaddle.position.x) < 4){
+            if( Math.abs(this.puck.position.x - this.redPaddle.position.x) < 4){
                 this.ballDirectionZ *= -1;
-                this.ballSpeed += 0.01; // Increase ball speed on successful hit
-                // this.ballDirectionX = this.leftPaddle.userData.speedX; // Use paddle speed for x-direction
+                this.ballSpeed += 0.001; // Increase ball speed on successful hit
+                // this.ballDirectionX = this.bluePaddle.userData.speedX; // Use paddle speed for x-direction
             } else {
-                console.log(this.rightScore);
-                this.leftScore++;
+                this.blueScore++;
                 this.resetPuck();
             }
         }
     }
-private scoreVisualEffect(): void {
-    const scoringDuration = 1000; // Adjust the duration in milliseconds
 
-    // Perform the scoring visual effect
-    const renderPass = new RenderPass(this.scene, this.camera);
-    this.composer.addPass(renderPass);
+    private scoreVisualEffect(): void {
+        const scoringDuration = 1000; // Adjust the duration in milliseconds
 
-    const glitchPass = new GlitchPass();
-    this.composer.addPass(glitchPass);
+        // Perform the scoring visual effect
+        const renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
 
-    const outputPass = new OutputPass();
-    this.composer.addPass(outputPass);
+        const glitchPass = new GlitchPass();
+        this.composer.addPass(glitchPass);
 
-    // Set a timer to remove the scoring effect after the specified duration
-    setTimeout(() => {
-        // Remove the scoring effect passes
-        this.composer.passes.pop();
-        this.composer.passes.pop();
-        this.composer.passes.pop();
-    }, scoringDuration);
-}
+        const outputPass = new OutputPass();
+        this.composer.addPass(outputPass);
+
+        // Set a timer to remove the scoring effect after the specified duration
+        setTimeout(() => {
+            // Remove the scoring effect passes
+            this.composer.passes.pop();
+            this.composer.passes.pop();
+            this.composer.passes.pop();
+        }, scoringDuration);
+
+        this.blueScoreElement.textContent = `Blue: ${this.blueScore}`;
+        this.redScoreElement.textContent = `Red: ${this.redScore}`;
+
+    }
 
     private resetPuck(): void {
         this.puck.position.set(0, 0, 0);
         this.ballSpeed = 0.01;
-        this.ballDirectionZ *= -1;
-        this.ballDirectionX = 0; // Reset ballDirectionX
+        this.ballDirectionX = 0.09; // Reset ballDirectionX
+        this.ballDirectionZ = 0.3; // Reset ballDirectionX
 
-        if (this.leftScore >= 3 || this.rightScore >= 3) {
-            // You can handle the end of the game here
-            // For example: alert("Game Over");
+        if (this.blueScore >= 3 || this.redScore >= 3) {
+            this.handleGameOver();
+
         }
     }
 
+    private async handleGameOver(): Promise<void> {
+        this.renderer.setAnimationLoop(null);
+
+        try {
+            const csrfToken = document.head.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            const response = await fetch('http://localhost/juegos/store', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    jugador2_id: "1",
+                    resultado_jugador1: this.blueScore,
+                    resultado_jugador2: this.redScore,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            window.location.href = 'http://localhost/dashboard';
+        } catch (error) {
+            console.error('Error:', error);
+            // Handle error as needed
+        }
+    }
     public init(): void {
         const animate = () => {
             requestAnimationFrame(animate);
@@ -237,5 +291,5 @@ private scoreVisualEffect(): void {
     }
 }
 
-const pongGame = new PongGame(1);
+const pongGame = new PongGame();
 pongGame.init();
