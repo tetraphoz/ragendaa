@@ -7,6 +7,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
 import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 
 const csrfToken = document.head.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -17,6 +19,8 @@ class PongGame {
     private puck: THREE.Mesh;
     private bluePaddle: THREE.Mesh;
     private redPaddle: THREE.Mesh;
+    private puntajeRojo: THREE.Mesh;
+    private puntajeAzul: THREE.Mesh;
     private blueScore: number;
     private redScore: number;
     private ballSpeed: number;
@@ -24,12 +28,22 @@ class PongGame {
     private ballDirectionZ: number;
     private composer: THREE.EffectComposer;
     private loader: THREE.FontLoader;
+    private font: THREE.Font;
+    private countdown: number;
+    private countdownText: THREE.Mesh;
 
-    private blueScoreElement: HTMLElement;
-    private redScoreElement: HTMLElement;
-
+    private async initFont(): Promise<void> {
+        return new Promise((resolve) => {
+            this.loader = new FontLoader();
+            this.loader.load('ibm.json', (font) => {
+                this.font = font;
+                resolve();
+            });
+        });
+    }
 
     constructor() {
+
         this.setupTablero();
         this.movePaddle();
 
@@ -37,8 +51,114 @@ class PongGame {
 
         this.blueScore = 0;
         this.redScore = 0;
+        this.countdown = 3; // Initial countdown value
 
         this.init();
+    }
+
+    private initCountdownText(): void {
+        const countdownGeometry = new TextGeometry(`${this.countdown}`, {
+            font: this.font,
+            size: 20,
+            height: 5,
+            curveSegments: 0,
+            bevelEnabled: false,
+            bevelThickness: 0,
+            bevelSize: 0,
+            bevelOffset: 0,
+            bevelSegments: 0,
+        });
+
+        const countdownMaterial = new THREE.MeshPhongMaterial({ color: 'white' });
+        this.countdownText = new THREE.Mesh(countdownGeometry, [
+            countdownMaterial,
+            countdownMaterial,
+        ]);
+
+        this.countdownText.position.set(0, 0, 0);
+        this.scene.add(this.countdownText);
+    }
+
+    private updateCountdownText(): void {
+        // Update the countdown text mesh
+        this.countdownText.geometry = new TextGeometry(`${this.countdown}`, {
+            font: this.font,
+            size: 20,
+            height: 5,
+            curveSegments: 0,
+            bevelEnabled: false,
+            bevelThickness: 0,
+            bevelSize: 0,
+            bevelOffset: 0,
+            bevelSegments: 0,
+        });
+    }
+
+    private startCountdown(): void {
+        const countdownInterval = setInterval(() => {
+            this.countdown--;
+
+            if (this.countdown === 0) {
+                clearInterval(countdownInterval);
+                this.scene.remove(this.countdownText);
+                this.startGame();
+            } else {
+                this.updateCountdownText();
+            }
+        }, 1000);
+    }
+
+
+    private mostrarPuntaje(): void {
+
+            if(this.scene.getObjectByName("puntajeRojo")){
+                this.scene.remove(this.scene.getObjectByName("puntajeRojo"));
+                this.scene.remove(this.scene.getObjectByName("puntajeAzul"));
+            }
+
+            this.puntajeRojo = new TextGeometry(`${this.redScore}`, {
+                font: this.font,
+                size: 10,
+                height: 1,
+                curveSegments: 0,
+                bevelEnabled: false,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 0,
+            });
+
+            this.puntajeAzul = new TextGeometry(`${this.blueScore}`, {
+                font: this.font,
+                size: 10,
+                height: 1,
+                curveSegments: 0,
+                bevelEnabled: false,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 0,
+            });
+
+            const MeshPuntajeRojo = new THREE.Mesh(this.puntajeRojo, [
+                new THREE.MeshPhongMaterial({ color: 'white' }),
+                new THREE.MeshPhongMaterial({ color: 'white' }),
+            ]);
+
+            const MeshPuntajeAzul = new THREE.Mesh(this.puntajeAzul, [
+                new THREE.MeshPhongMaterial({ color: 'white' }),
+                new THREE.MeshPhongMaterial({ color: 'white' }),
+            ]);
+
+            MeshPuntajeAzul.position.set(-40, 0, 0);
+            MeshPuntajeRojo.position.set(40, 0, 0);
+
+            this.scene.add(MeshPuntajeAzul);
+            this.scene.add(MeshPuntajeRojo);
+
+            MeshPuntajeAzul.name = "puntajeAzul";
+            MeshPuntajeRojo.name = "puntajeRojo";
+
     }
 
     private setupTablero(){
@@ -54,18 +174,11 @@ class PongGame {
         this.createCubo();
         this.createRaquetas();
         this.createLight();
+        this.mostrarPuntaje();
 
-        // Create and append HTML elements for displaying scores
-        this.blueScoreElement = document.createElement('div');
-        this.blueScoreElement.className = 'score';
-        this.blueScoreElement.textContent = 'Blue: 0';
-        document.getElementById("juego").appendChild(this.blueScoreElement);
-
-        this.redScoreElement = document.createElement('div');
-        this.redScoreElement.className = 'score';
-        this.redScoreElement.textContent = 'Red: 0';
-        document.getElementById("juego").appendChild(this.redScoreElement);
-
+        this.initFont().then(() => {
+            this.init();
+        });
 
         this.composer = new EffectComposer( this.renderer );
 
@@ -77,6 +190,9 @@ class PongGame {
 
         const effect3 = new OutputPass();
         this.composer.addPass( effect3 );
+
+        this.initCountdownText();
+        this.startCountdown();
     }
 
     private onWindowResize(scale: number) {
@@ -184,11 +300,12 @@ class PongGame {
 
 
     private handleCollisions(): void {
-        if (this.puck.position.x >= 14.5 && this.puck.position.x <= 15
-           || this.puck.position.x <= -14.5 && this.puck.position.x >= -15){
+        if (this.puck.position.x >= 18.5 && this.puck.position.x <= 19
+           || this.puck.position.x <= -18.5 && this.puck.position.x >= -19){
             this.ballDirectionX *= -1;
             this.ballSpeed -= 0.001; // Agregar friccion en la pared
         }
+
         if (this.puck.position.z >= 19.5 && this.puck.position.z <= 30){
             if( Math.abs(this.puck.position.x - this.bluePaddle.position.x) < 4) {
                 this.ballDirectionZ *= -1;
@@ -197,6 +314,7 @@ class PongGame {
                 this.redScore++;
                 this.scoreVisualEffect();
                 this.resetPuck();
+                this.startCountdown(); // Start countdown after goal
             }
         }
 
@@ -208,6 +326,7 @@ class PongGame {
             } else {
                 this.blueScore++;
                 this.resetPuck();
+                this.startCountdown(); // Start countdown after goal
             }
         }
     }
@@ -233,9 +352,7 @@ class PongGame {
             this.composer.passes.pop();
         }, scoringDuration);
 
-        this.blueScoreElement.textContent = `Blue: ${this.blueScore}`;
-        this.redScoreElement.textContent = `Red: ${this.redScore}`;
-
+        this.mostrarPuntaje();
     }
 
     private resetPuck(): void {
@@ -245,14 +362,12 @@ class PongGame {
         this.ballDirectionZ = 0.3; // Reset ballDirectionX
 
         if (this.blueScore >= 3 || this.redScore >= 3) {
-            this.handleGameOver();
+            // this.handleGameOver();
 
         }
     }
 
     private async handleGameOver(): Promise<void> {
-        this.renderer.setAnimationLoop(null);
-
         try {
             const csrfToken = document.head.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -280,7 +395,19 @@ class PongGame {
         }
             window.location.href = 'http://localhost/dashboard';
     }
-    public init(): void {
+
+    public startGame(): void {
+        const controls = new PointerLockControls(this.camera, document.body);
+        this.scene.add(controls.getObject());
+
+        document.getElementById("juego").addEventListener('click', () => {
+            controls.lock();
+            this.toggleFullscreen();
+        });
+
+        this.resetPuck(); // Initialize puck position
+
+        // Initialize the game loop
         const animate = () => {
             requestAnimationFrame(animate);
             this.gameLoop();
@@ -289,7 +416,13 @@ class PongGame {
 
         animate();
     }
+
+
+    public init(): void {
+        this.initCountdownText();
+        this.startCountdown();
+    }
 }
 
 const pongGame = new PongGame();
-pongGame.init();
+pongGame.startGame();
