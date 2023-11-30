@@ -6,17 +6,27 @@
             <div class="flex justify-center">
             <p class="m-2">Partidas totales: {{ $totalPartidas }}</p>
             <p class="m-2">Partidas ganadas: {{ $partidasGanadas }}</p>
-            <p class="m-2">Porcentaje de partidas ganadas: {{ number_format($porcentajeGanadas, 2) }}%</p>
+            <p class="m-2">Porcentaje de partidas ganadas: {{ number_format($porcentajeGanadas, 0) }}%</p>
             </div>
         </div>
 
-        <a href="/waiting" class="cta-button inline-flex items-center px-8 py-4 border text-sm leading-4 font-medium rounded-md text-yellow-300 bg-red-800 hover:bg-red-600 hover:text-yellow-200 border-yellow-600 focus:outline-none transition ease-in-out duration-150 mb-8">
+<div class="flex justify-center items-center">
+
+    <div class="flex flex-col items-center">
+        <a href="/waiting" class="cta-button inline-flex p-5 px-8 py-4 border text-sm leading-4 font-medium rounded-md text-yellow-300 bg-red-800 hover:bg-red-600 hover:text-yellow-200 border-yellow-600 focus:outline-none transition ease-in-out duration-150 mb-8 w-48">
             <button>Empezar a jugar</button>
         </a>
 
-        <div class="m-8">
-            <canvas id="winLossChart" width="400" height="400"></canvas>
-        </div>
+        <a href="/partida" class="cta-button inline-flex p-5 px-8 py-4 border text-sm leading-4 font-medium rounded-md text-yellow-300 bg-blue-800 hover:bg-blue-600 hover:text-yellow-200 border-yellow-600 focus:outline-none transition ease-in-out duration-150 mb-8 w-48">
+            <button>Practicar contra CPU</button>
+        </a>
+    </div>
+
+    <div class="m-8">
+        <canvas id="winLossChart" width="400" height="400"></canvas>
+    </div>
+
+</div>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -43,17 +53,15 @@
                 <thead>
                     <tr>
                         <th class="py-2 px-4 border-b">Fecha</th>
-                        <th class="py-2 px-4 border-b">Jugador 1</th>
-                        <th class="py-2 px-4 border-b">Jugador 2</th>
-                        <th class="py-2 px-4 border-b">Resultado Jugador 1</th>
-                        <th class="py-2 px-4 border-b">Resultado Jugador 2</th>
+                        <th class="py-2 px-4 border-b">Oponente</th>
+                        <th class="py-2 px-4 border-b">Puntuacion de {{$user->name}}</th>
+                        <th class="py-2 px-4 border-b">Puntuacion de Oponente</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($historial as $partida)
                         <tr class="hover:bg-gray-100 hover:text-gray-900">
                             <td class="py-2 px-4 border-b">{{ $partida->created_at }}</td>
-                            <td class="py-2 px-4 border-b">{{ $partida->jugador1->name }}</td>
                             <td class="py-2 px-4 border-b">{{ $partida->jugador2->name }}</td>
                             <td class="py-2 px-4 border-b">{{ $partida->resultado_jugador1 }}</td>
                             <td class="py-2 px-4 border-b">{{ $partida->resultado_jugador2 }}</td>
