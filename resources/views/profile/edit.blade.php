@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-2">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="flex flex-col m-8">
+        <div class="max-w-7xl m-auto sm:px-6 lg:px-8 space-y-6">
             
                     @include('profile.partials.update-profile-information-form')
 
