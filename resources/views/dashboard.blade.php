@@ -18,8 +18,6 @@
             <canvas id="winLossChart" width="400" height="400"></canvas>
         </div>
 
-
-        <script type="module" src="{{ Vite::asset('resources/js/tablero.ts') }}" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
