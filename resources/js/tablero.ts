@@ -44,6 +44,8 @@ class PongGame {
 
     constructor() {
 
+        this.initFont();
+
         this.setupTablero();
         this.movePaddle();
 
@@ -51,9 +53,7 @@ class PongGame {
 
         this.blueScore = 0;
         this.redScore = 0;
-        this.countdown = 3; // Initial countdown value
-
-        this.init();
+        this.countdown = 5; // Initial countdown value
     }
 
     private initCountdownText(): void {
@@ -75,13 +75,13 @@ class PongGame {
             countdownMaterial,
         ]);
 
-        this.countdownText.position.set(0, 0, 0);
+        this.countdownText.position.set(-5, 10, 10);
         this.scene.add(this.countdownText);
     }
 
-    private updateCountdownText(): void {
+    private updateCountdownText(text: string): void {
         // Update the countdown text mesh
-        this.countdownText.geometry = new TextGeometry(`${this.countdown}`, {
+        this.countdownText.geometry = new TextGeometry(text, {
             font: this.font,
             size: 20,
             height: 5,
@@ -100,10 +100,11 @@ class PongGame {
 
             if (this.countdown === 0) {
                 clearInterval(countdownInterval);
+                this.updateCountdownText("");
                 this.scene.remove(this.countdownText);
                 this.startGame();
             } else {
-                this.updateCountdownText();
+                this.updateCountdownText(this.countdown.toString());
             }
         }, 1000);
     }
@@ -163,7 +164,7 @@ class PongGame {
 
     private setupTablero(){
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById("juego").appendChild(this.renderer.domElement);
 
         this.scene = new THREE.Scene();
@@ -176,10 +177,6 @@ class PongGame {
         this.createLight();
         this.mostrarPuntaje();
 
-        this.initFont().then(() => {
-            this.init();
-        });
-
         this.composer = new EffectComposer( this.renderer );
 
         this.composer.addPass( new RenderPass( this.scene, this.camera ) );
@@ -191,16 +188,15 @@ class PongGame {
         const effect3 = new OutputPass();
         this.composer.addPass( effect3 );
 
-        this.initCountdownText();
-        this.startCountdown();
+        window.addEventListener('resize', () => this.onWindowResize(), false);
     }
 
-    private onWindowResize(scale: number) {
+    private onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
 
-        this.renderer.setSize( window.innerWidth / scale, window.innerHeight / scale);
-        this.composer.setSize( window.innerWidth / scale, window.innerHeight / scale);
+        this.renderer.setSize( window.innerWidth , window.innerHeight );
+        this.composer.setSize( window.innerWidth , window.innerHeight );
     }
 
     private createCubo() {
@@ -230,37 +226,12 @@ class PongGame {
         this.scene.add(light);
     }
 
-    private toggleFullscreen(): void {
-        const element = document.getElementById("juego") || document.body;
-
-        if (element.requestFullscreen) {
-            element.requestFullscreen().then(() => {
-                const controls = new PointerLockControls(this.camera, document.body);
-                controls.lock();
-            });
-        } else if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
-
-        // Listen for the fullscreenchange event
-        document.addEventListener('fullscreenchange', () => {
-            if (document.fullscreenElement) {
-                // The window is in fullscreen mode
-                this.onWindowResize(1);
-            } else {
-                // The window is not in fullscreen mode
-                this.onWindowResize(2);
-            }
-        });
-    }
-
     private movePaddle(): void {
         const controls = new PointerLockControls(this.camera, document.body);
         this.scene.add(controls.getObject());
 
         document.getElementById("juego") .addEventListener('click', () => {
             controls.lock();
-            this.toggleFullscreen()
         });
 
         const raycaster = new THREE.Raycaster();
@@ -353,6 +324,7 @@ class PongGame {
         }, scoringDuration);
 
         this.mostrarPuntaje();
+        this.countdown = 5;
     }
 
     private resetPuck(): void {
@@ -397,31 +369,19 @@ class PongGame {
     }
 
     public startGame(): void {
-        const controls = new PointerLockControls(this.camera, document.body);
-        this.scene.add(controls.getObject());
-
-        document.getElementById("juego").addEventListener('click', () => {
-            controls.lock();
-            this.toggleFullscreen();
-        });
-
-        this.resetPuck(); // Initialize puck position
+        this.initCountdownText();
+        this.startCountdown();
 
         // Initialize the game loop
         const animate = () => {
             requestAnimationFrame(animate);
-            this.gameLoop();
+            if(this.countdown === 0) this.gameLoop();
             this.composer.render();
         };
 
         animate();
     }
 
-
-    public init(): void {
-        this.initCountdownText();
-        this.startCountdown();
-    }
 }
 
 const pongGame = new PongGame();

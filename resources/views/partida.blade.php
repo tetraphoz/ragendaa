@@ -1,29 +1,26 @@
-<x-app-layout>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <!-- Botón para salir de la partida -->
-                <button id="salirPartida" class="btn btn-danger">Salir de la Partida</button>
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-                <!-- Contenedor del juego -->
-                <div id="juego" class="max-w-md"></div>
-            </div>
-        </div>
-    </div>
+        <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Otras secciones, scripts, etc. -->
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- Script para el juego -->
-    <script type="module" src="{{ Vite::asset('resources/js/tablero.ts') }}" defer></script>
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="font-sans antialiased bg-black text-white items-center min-h-screen">
 
-    <!-- Puedes agregar más scripts, estilos, etc., según sea necesario -->
+        <!-- Contenedor del juego -->
+        <div id="juego" class="flex justify-center"></div>
 
-    <script>
-        // Puedes agregar eventos o funciones aquí, por ejemplo, para manejar el clic del botón
-        document.getElementById('salirPartida').addEventListener('click', function () {
-            // Lógica para salir de la partida, redirigir a otra página, etc.
-            // Puedes implementar una función en tu script de juego para manejar esto
-            // Ejemplo: juego.salirPartida();
-        });
-    </script>
-</x-app-layout>
+        <!-- Script para el juego -->
+        <script type="module" src="{{ Vite::asset('resources/js/tablero.ts') }}" defer></script>
+
+    </body>
+</html>
