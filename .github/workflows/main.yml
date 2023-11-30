@@ -1,0 +1,28 @@
+name: push-and-deploy-to-server
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v2
+      - name: ssh and deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: "the/server/path"
+      - name: go to project
+        run: cd /var/www/html/ragendaa/
+      - name: update repository
+        run: git pull
+      - name: update dependencies
+        run: npm update
+      - name:  build typescript
+        run: npm run build
