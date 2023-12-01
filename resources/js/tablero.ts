@@ -271,8 +271,7 @@ class PongGame {
     }
 
     private gameLoop(): void {
-
-        if(this.countdown  === -1){ // Pausar el juego
+        if(this.countdown  === -1){ // DePausar el juego
             this.puck.position.z += this.ballDirectionZ;
             this.puck.position.x += this.ballDirectionX;
             this.redPaddleCPU();
@@ -359,10 +358,16 @@ class PongGame {
     }
 
     private async handleGameOver(): Promise<void> {
+
+        var baseUrl = 'http://localhost'
+        if (window.location.hostname !== 'localhost') {
+            baseUrl = 'https://pong.fusufum.xyz';
+        }
+
         try {
             const csrfToken = document.head.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-            const response = await fetch('http://localhost/juegos/store', {
+            const response = await fetch(baseUrl +'/juegos/store', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -384,7 +389,7 @@ class PongGame {
             console.error('Error:', error);
             // Handle error as needed
         }
-            window.location.href = 'http://localhost/dashboard';
+            window.location.href = baseUrl + '/dashboard';
     }
 
     public startGame(): void {
