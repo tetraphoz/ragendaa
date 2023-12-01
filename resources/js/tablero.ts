@@ -35,7 +35,7 @@ class PongGame {
     private async initFont(): Promise<void> {
         return new Promise((resolve) => {
             this.loader = new FontLoader();
-            this.loader.load('ibm.json', (font) => {
+            this.loader.load('/fonts/ibm.json', (font) => {
                 this.font = font;
                 resolve();
             });
