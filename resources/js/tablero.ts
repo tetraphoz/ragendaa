@@ -43,17 +43,58 @@ class PongGame {
     }
 
     constructor() {
-
         this.initFont();
+
+        this.blueScore = 0;
+        this.redScore = 0;
 
         this.setupTablero();
         this.movePaddle();
 
-        this.resetPuck();
+        this.resetGame();
+    }
 
-        this.blueScore = 0;
-        this.redScore = 0;
-        this.countdown = 5; // Initial countdown value
+    private initPuntajeText(): void {
+            const puntajeRojo = new TextGeometry(`${this.redScore}`, {
+                font: this.font,
+                size: 10,
+                height: 1,
+                curveSegments: 0,
+                bevelEnabled: false,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 0,
+            });
+
+            const puntajeAzul = new TextGeometry(`${this.blueScore}`, {
+                font: this.font,
+                size: 10,
+                height: 1,
+                curveSegments: 0,
+                bevelEnabled: false,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 0,
+            });
+
+            const textMaterial = new THREE.MeshPhongMaterial({ color: 'white' });
+            this.puntajeRojo = new THREE.Mesh(puntajeRojo, [
+                textMaterial,
+                textMaterial
+            ]);
+
+            this.puntajeAzul = new THREE.Mesh(puntajeAzul, [
+                textMaterial,
+                textMaterial
+            ]);
+
+            this.puntajeAzul.position.set(-40, 0, 0);
+            this.puntajeRojo.position.set(40, 0, 0);
+
+            this.scene.add(this.puntajeAzul);
+            this.scene.add(this.puntajeRojo);
     }
 
     private initCountdownText(): void {
@@ -96,28 +137,21 @@ class PongGame {
 
     private startCountdown(): void {
         const countdownInterval = setInterval(() => {
-            this.countdown--;
 
             if (this.countdown === 0) {
                 clearInterval(countdownInterval);
                 this.updateCountdownText("");
-                this.scene.remove(this.countdownText);
-                this.startGame();
             } else {
                 this.updateCountdownText(this.countdown.toString());
             }
+
+            this.countdown--;
         }, 1000);
     }
 
 
     private mostrarPuntaje(): void {
-
-            if(this.scene.getObjectByName("puntajeRojo")){
-                this.scene.remove(this.scene.getObjectByName("puntajeRojo"));
-                this.scene.remove(this.scene.getObjectByName("puntajeAzul"));
-            }
-
-            this.puntajeRojo = new TextGeometry(`${this.redScore}`, {
+            this.puntajeRojo.geometry = new TextGeometry(`${this.redScore}`, {
                 font: this.font,
                 size: 10,
                 height: 1,
@@ -129,7 +163,7 @@ class PongGame {
                 bevelSegments: 0,
             });
 
-            this.puntajeAzul = new TextGeometry(`${this.blueScore}`, {
+            this.puntajeAzul.geometry = new TextGeometry(`${this.blueScore}`, {
                 font: this.font,
                 size: 10,
                 height: 1,
@@ -140,26 +174,6 @@ class PongGame {
                 bevelOffset: 0,
                 bevelSegments: 0,
             });
-
-            const MeshPuntajeRojo = new THREE.Mesh(this.puntajeRojo, [
-                new THREE.MeshPhongMaterial({ color: 'white' }),
-                new THREE.MeshPhongMaterial({ color: 'white' }),
-            ]);
-
-            const MeshPuntajeAzul = new THREE.Mesh(this.puntajeAzul, [
-                new THREE.MeshPhongMaterial({ color: 'white' }),
-                new THREE.MeshPhongMaterial({ color: 'white' }),
-            ]);
-
-            MeshPuntajeAzul.position.set(-40, 0, 0);
-            MeshPuntajeRojo.position.set(40, 0, 0);
-
-            this.scene.add(MeshPuntajeAzul);
-            this.scene.add(MeshPuntajeRojo);
-
-            MeshPuntajeAzul.name = "puntajeAzul";
-            MeshPuntajeRojo.name = "puntajeRojo";
-
     }
 
     private setupTablero(){
@@ -175,7 +189,10 @@ class PongGame {
         this.createCubo();
         this.createRaquetas();
         this.createLight();
-        this.mostrarPuntaje();
+        this.initFont().then(() => {
+            this.initCountdownText();
+            this.initPuntajeText();
+        });
 
         this.composer = new EffectComposer( this.renderer );
 
@@ -189,6 +206,7 @@ class PongGame {
         this.composer.addPass( effect3 );
 
         window.addEventListener('resize', () => this.onWindowResize(), false);
+
     }
 
     private onWindowResize() {
@@ -238,35 +256,37 @@ class PongGame {
         const mouse = new THREE.Vector2();
 
         controls.addEventListener('change', () => {
-            // Calculate mouse coordinates in normalized device coordinates (NDC)
             mouse.x = 0;
             mouse.y = 0;
 
-            // Update the raycaster with the mouse coordinates
             raycaster.setFromCamera(mouse, this.camera);
 
-            // Check for intersection with the z=0 plane
             const intersection = new THREE.Vector3();
             raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), intersection);
 
-            // Update the paddle position based on the intersection point
             this.bluePaddle.position.x = intersection.x;
 
-            // Ensure the paddle stays within certain bounds if needed
-            // For example:
             this.bluePaddle.position.x = Math.max(Math.min(this.bluePaddle.position.x, 15), -15);
             });
     }
 
     private gameLoop(): void {
-        this.puck.position.z += this.ballDirectionZ;
-        this.puck.position.x += this.ballDirectionX;
-        this.redPaddleCPU();
-        this.handleCollisions();
+
+        if(this.countdown  === -1){ // Pausar el juego
+            this.puck.position.z += this.ballDirectionZ;
+            this.puck.position.x += this.ballDirectionX;
+            this.redPaddleCPU();
+            this.handleCollisions();
+        }
     }
 
     private redPaddleCPU(){
         this.redPaddle.position.x = this.puck.position.x;
+    }
+
+    private paddleBounce(){
+        this.ballDirectionZ *= -1;
+        this.ballSpeed += 0.001;
     }
 
 
@@ -279,27 +299,28 @@ class PongGame {
 
         if (this.puck.position.z >= 19.5 && this.puck.position.z <= 30){
             if( Math.abs(this.puck.position.x - this.bluePaddle.position.x) < 4) {
-                this.ballDirectionZ *= -1;
-                this.ballSpeed += 0.001; // Increase ball speed on successful hit
+                this.paddleBounce();
             } else {
                 this.redScore++;
                 this.scoreVisualEffect();
-                this.resetPuck();
-                this.startCountdown(); // Start countdown after goal
+                this.resetGame();
             }
         }
 
         if (this.puck.position.z <= -19.5 && this.puck.position.z >= -30){
             if( Math.abs(this.puck.position.x - this.redPaddle.position.x) < 4){
-                this.ballDirectionZ *= -1;
-                this.ballSpeed += 0.001; // Increase ball speed on successful hit
-                // this.ballDirectionX = this.bluePaddle.userData.speedX; // Use paddle speed for x-direction
+                this.paddleBounce();
             } else {
                 this.blueScore++;
-                this.resetPuck();
-                this.startCountdown(); // Start countdown after goal
+                this.resetGame();
             }
         }
+    }
+
+    private resetGame(){
+        this.resetPuck();
+        this.countdown = 5;
+        this.startCountdown();
     }
 
     private scoreVisualEffect(): void {
@@ -324,18 +345,16 @@ class PongGame {
         }, scoringDuration);
 
         this.mostrarPuntaje();
-        this.countdown = 5;
     }
 
     private resetPuck(): void {
         this.puck.position.set(0, 0, 0);
         this.ballSpeed = 0.01;
-        this.ballDirectionX = 0.09; // Reset ballDirectionX
+        this.ballDirectionX = Math.random() - 0.5; // Reset ballDirectionX
         this.ballDirectionZ = 0.3; // Reset ballDirectionX
 
-        if (this.blueScore >= 3 || this.redScore >= 3) {
-            // this.handleGameOver();
-
+        if (this.blueScore >= 5 || this.redScore >= 5) {
+            this.handleGameOver();
         }
     }
 
@@ -369,13 +388,10 @@ class PongGame {
     }
 
     public startGame(): void {
-        this.initCountdownText();
-        this.startCountdown();
-
         // Initialize the game loop
         const animate = () => {
             requestAnimationFrame(animate);
-            if(this.countdown === 0) this.gameLoop();
+            this.gameLoop();
             this.composer.render();
         };
 
